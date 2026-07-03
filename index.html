@@ -6,11 +6,17 @@
     <title>강의 자료실</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap');
         
         body { font-family: 'Pretendard', sans-serif; background: #f8f9fa; padding: 20px; margin: 0; }
         .container { max-width: 1000px; margin: auto; }
         
+        /* 제목 영역 스타일 */
+        .title-area { margin-bottom: 30px; line-height: 1.2; }
+        .title-year { font-size: 1.2rem; color: #888; font-weight: 600; }
+        .title-main { font-size: 2.2rem; font-weight: 800; color: #222; margin: 5px 0; }
+        .title-sub { font-size: 1.4rem; color: #555; font-weight: 600; }
+
         .search-area { margin-bottom: 20px; }
         #search { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         
@@ -38,6 +44,12 @@
 <body>
 
 <div class="container">
+    <div class="title-area">
+        <div class="title-year">2026</div>
+        <div class="title-main">공공 AI 역량트랙 &<br>AI 챔피언 종합과정</div>
+        <div class="title-sub">선발자 관리 시스템</div>
+    </div>
+
     <div class="search-area">
         <input type="text" id="search" placeholder="과목명을 검색하세요...">
     </div>
@@ -62,10 +74,51 @@
         const uniqueTabs = [...new Set(fullData.map(r => r.차수))];
         const container = document.getElementById('tabContainer');
         
-        // '전체' 버튼
         let html = `<button class="tab-btn active" style="border-color:#333; background:#333; color:#fff;" onclick="filterByTab('전체', this, '#333')">전체</button>`;
         
-        // 차수별 버튼
         html += uniqueTabs.map((t, i) => {
             const color = colors[i % colors.length];
-            return
+            return `<button class="tab-btn" style="border-color:${color}; color:${color};" 
+                    onclick="filterByTab('${t}', this, '${color}')">${t}</button>`;
+        }).join('');
+        
+        container.innerHTML = html;
+    }
+
+    function renderCards(data) {
+        const grid = document.getElementById('cardGrid');
+        const uniqueTabs = [...new Set(fullData.map(r => r.차수))];
+        
+        grid.innerHTML = data.map((r) => {
+            const colorIndex = uniqueTabs.indexOf(r.차수);
+            const color = colors[colorIndex % colors.length];
+            return `
+                <div class="card" style="border-top-color: ${color}">
+                    <div class="card-header">${r.차수}</div>
+                    <div class="card-title">${r.과목}</div>
+                    <div class="card-period">${r.기간 || '기간 정보 없음'}</div>
+                    <a href="${r.링크}" class="link-btn" target="_blank" style="background-color:${color}">바로가기</a>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterByTab(tab, btn, color) {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.backgroundColor = '#fff';
+        });
+        btn.classList.add('active');
+        btn.style.backgroundColor = color;
+        
+        const filtered = tab === '전체' ? fullData : fullData.filter(r => r.차수 === tab);
+        renderCards(filtered);
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        renderCards(fullData.filter(r => r.과목.toLowerCase().includes(val)));
+    });
+</script>
+</body>
+</html>
