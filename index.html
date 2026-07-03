@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>강의 자료실</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background: #f8f9fa; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        
+        /* 검색 및 탭 영역 분리 */
+        .search-area { margin-bottom: 20px; }
+        #search { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .tab-area { margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: #fff; border: 1px solid #ddd; border-radius: 20px; transition: 0.3s; }
+        .tab-btn.active { background: #333; color: #fff; border-color: #333; }
+
+        /* 카드 그리드 */
+        #cardGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #ccc; }
+        .card-header { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; color: #666; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 15px; }
+        .card-period { font-size: 0.85rem; color: #888; margin-bottom: 20px; }
+        .link-btn { display: block; text-align: center; background: #333; color: #fff; padding: 10px; border-radius: 6px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-area">
+        <input type="text" id="search" placeholder="과목명을 검색하세요...">
+    </div>
+    <div class="tab-area" id="tabContainer"></div>
+    <div id="cardGrid"></div>
+</div>
+
+<script>
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQXgzRCsEaPrED_IdV-LlDeZVVFXtCcm_QAjXaQDliNgwESXqu_lVxAwDO6c-Gxc5lCdVOyUirk57Q/pub?gid=0&single=true&output=csv";
+    let fullData = [];
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5'];
+
+    Papa.parse(csvUrl, {
+        download: true, header: true, complete: function(results) {
+            fullData = results.data.filter(r => r.차수);
+            renderTabs();
+            renderCards(fullData);
+        }
+    });
+
+    function renderTabs() {
+        const tabs = [...new Set(fullData.map(r => r.차수))];
+        document.getElementById('tabContainer').innerHTML = `<button class="tab-btn active" onclick="filterByTab('전체', this)">전체</button>` + 
+            tabs.map(t => `<button class="tab-btn" onclick="filterByTab('${t}', this)">${t}</button>`).join('');
+    }
+
+    function renderCards(data) {
+        document.getElementById('cardGrid').innerHTML = data.map((r, i) => {
+            const color = colors[data.indexOf(r) % colors.length];
+            return `
+                <div class="card" style="border-top-color: ${color}">
+                    <div class="card-header">${r.차수}</div>
+                    <div class="card-title">${r.과목}</div>
+                    <div class="card-period">${r.기간 || '기간 정보 없음'}</div>
+                    <a href="${r.링크}" class="link-btn" target="_blank">바로가기</a>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterByTab(tab, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filtered = tab === '전체' ? fullData : fullData.filter(r => r.차수 === tab);
+        renderCards(filtered);
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        renderCards(fullData.filter(r => r.과목.toLowerCase().includes(val)));
+    });
+</script>
+</body>
+</html>
