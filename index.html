@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>강의 링크 모음</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .tab-btn { margin-right: 5px; padding: 8px 16px; cursor: pointer; border: 1px solid #ccc; background: #f9f9f9; border-radius: 4px; }
+        .tab-btn:hover { background: #eee; }
+        #search { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <h2>강의 목록 관리</h2>
+    <input type="text" id="search" placeholder="과목명을 검색하세요...">
+    <div id="tabContainer"></div>
+    <table id="table">
+        <thead><tr><th>차수</th><th>과목</th><th>링크</th></tr></thead>
+        <tbody id="tbody"></tbody>
+    </table>
+
+    <script>
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRQXgzRCsEaPrED_IdV-LlDeZVVFXtCcm_QAjXaQDliNgwESXqu_lVxAwDO6c-Gxc5lCdVOyUirk57Q/pub?gid=0&single=true&output=csv";
+        let fullData = [];
+
+        Papa.parse(csvUrl, {
+            download: true, header: true, complete: function(results) {
+                fullData = results.data.filter(r => r.차수 && r.차수.trim() !== "");
+                renderTabs();
+                renderTable(fullData);
+            }
+        });
+
+        function renderTabs() {
+            const tabs = [...new Set(fullData.map(r => r.차수.trim()))].sort();
+            document.getElementById('tabContainer').innerHTML = 
+                `<button class="tab-btn" onclick="renderTable(fullData)">전체</button>` + 
+                tabs.map(t => `<button class="tab-btn" onclick="filterByTab('${t}')">${t}차</button>`).join('');
+        }
+
+        function renderTable(data) {
+            document.getElementById('tbody').innerHTML = data.map(r => 
+                `<tr><td>${r.차수}</td><td>${r.과목}</td><td><a href="${r.링크}" target="_blank">바로가기</a></td></tr>`
+            ).join('');
+        }
+
+        function filterByTab(tab) { renderTable(fullData.filter(r => r.차수.trim() == tab)); }
+        
+        document.getElementById('search').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            renderTable(fullData.filter(r => r.과목.toLowerCase().includes(val)));
+        });
+    </script>
+</body>
+</html>
